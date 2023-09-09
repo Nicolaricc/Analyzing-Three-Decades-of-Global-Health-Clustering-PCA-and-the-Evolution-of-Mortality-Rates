@@ -1,0 +1,1190 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Dataset here 
+https://ourworldindata.org/grapher/annual-number-of-deaths-by-cause?tab=table
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+rm(list=ls())
+library(tidyverse)
+library(GGally) # ggplot2-based visualization of correlations
+library(factoextra) # ggplot2-based visualization of pca
+library(countrycode)
+library(rworldmap)
+library(mice)
+library(plotly)
+
+library(tidyverse)
+library(GGally) # ggplot2-based visualization of correlations
+library(factoextra) # ggplot2-based visualization of pca
+library(countrycode)
+library(rworldmap)
+library(mice)
+library(plotly)
+
+#install.packages("xml2")
+library(xml2)
+library(httr)
+library(tidyverse)
+library(sf)
+library(rnaturalearth)
+#install.packages("rvest")
+library(rvest)
+#install.packages("xml2")
+#install.packages("libxml2")
+#install.packages("libcurl")
+library(xml2)
+#devtools::install_github("r-lib/xml2")
+
+#install.packages("scrapex")
+#library(scrapex)
+library(rvest)
+library(httr)
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggplot2)
+
+library(maps)
+library(mapdata)
+
+```
+
+
+Upload the dataset
+```{r}
+annual_number_of_deaths_by_cause <- read_csv("C:/Users/ricci/OneDrive/Desktop/annual-number-of-deaths-by-cause.csv")
+pp <- annual.number.of.deaths.by.cause
+```
+
+
+```{r}
+names(pp)[1]<-paste("Entity")
+names(pp)[2]<-paste("Code")
+names(pp)[3]<-paste("Year")
+names(pp)[4]<-paste("Number _of_executions")
+names(pp)[5]<-paste("Meningitis")
+names(pp)[6]<-paste("Alzheimer_s_disease_and_other_dementias")
+names(pp)[7]<-paste("Parkinson_s_disease")
+names(pp)[8]<-paste("Nutritional_deficiencies")
+names(pp)[9]<-paste("Malaria")
+names(pp)[10]<-paste("Drowning")
+names(pp)[11]<-paste("Interpersonal_violence")
+names(pp)[12]<-paste("Maternal_disorders")
+names(pp)[13]<-paste("HIV_AIDS")
+names(pp)[14]<-paste("Drug_use_disorders")
+names(pp)[15]<-paste("Tuberculosis")
+names(pp)[16]<-paste("Cardiovascular_diseases")
+names(pp)[17]<-paste("Lower_respiratory_infections")
+names(pp)[18]<-paste("Neonatal_disorders")
+names(pp)[19]<-paste("Alcohol_use_disorders")
+names(pp)[20]<-paste("Self_harm")
+names(pp)[21]<-paste("Exposure_to_forces_of_nature")
+names(pp)[22]<-paste("Diarrheal_diseases")
+names(pp)[23]<-paste("Environmental_heat_and_cold_exposure")
+names(pp)[24]<-paste("Neoplasms")
+names(pp)[25]<-paste("Conflict_and_terrorism")
+names(pp)[26]<-paste("Diabetes_mellitus")
+names(pp)[27]<-paste("Chronic_kidney_disease")
+names(pp)[28]<-paste("Poisonings")
+names(pp)[29]<-paste("Protein_energy_malnutrition")
+names(pp)[30]<-paste("Terrorism")
+names(pp)[31]<-paste("Road_injuries")
+names(pp)[32]<-paste("Chronic_respiratory_diseases")
+names(pp)[33]<-paste("Cirrhosis_and_other_chronic_liver_diseases")
+names(pp)[34]<-paste("Digestive_diseases")
+names(pp)[35]<-paste("Fire_heat_and_hot_substances")
+names(pp)[36]<-paste("Acute_hepatitis")
+
+
+colnames(pp)
+
+
+world_map <- map_data("world")
+world_map <- rename(world_map, "Entity" = "region")
+
+merged_data <- merge(world_map, pp, by = "Entity")
+
+numero_nas <- sapply(merged_data, function(x) sum(is.na(x)))
+
+merged_data_1 <- merged_data[, 10:41]
+
+```
+
+
+Questa parte non serve, poichè viene utilizzata per creare il dataset nel chunk seguente
+```{r}
+# Crea l'oggetto MICE con il dataset
+mice_obj <- mice(merged_data_1)
+#mice_obj <- mice(merged_data)
+# Esegui l'imputazione dei dati mancanti
+imputed_data <- complete(mice_obj)
+
+#Verifica quanti Na ci sono in ogni variabile all'interno del dataset
+na_count <- colSums(is.na(imputed_data))
+
+xx <- merged_data[, 1:9]
+imputed_data <- cbind(xx, imputed_data)
+
+
+#DEVI MERGERE IL DATASET CON UNA SOLA COORDINATA 
+imputed_data%>%
+  select(Entity, Year)
+
+#gruppa questo dataset e cerca di mergerlo usando le coordinate del dataset che hai scrappato
+
+#somma per ogni anno il numero di morti per ogni subregione
+
+write.csv(imputed_data, file = "~/data_impor.csv", row.names = FALSE)
+```
+
+
+```{r}
+imputed_data <- data_impor
+```
+
+
+```{r}
+good <- imputed_data%>%
+  group_by(Entity, Year)%>%
+  summarise(order,
+    Meningitis = sum(Meningitis),
+            Alzheimer_s_disease_and_other_dementias = sum(Alzheimer_s_disease_and_other_dementias),
+            Parkinson_s_disease = sum(Parkinson_s_disease),
+            Nutritional_deficiencies = sum(Nutritional_deficiencies),
+            Malaria = sum(Malaria),
+            Drowning = sum(Drowning),
+            Interpersonal_violence = sum(Interpersonal_violence),
+            Maternal_disorders = sum(Maternal_disorders),
+            HIV_AIDS = sum(HIV_AIDS),
+            Drug_use_disorders = sum(Drug_use_disorders),
+            Tuberculosis = sum(Tuberculosis),
+            Cardiovascular_diseases = sum(Cardiovascular_diseases),
+            Lower_respiratory_infections = sum(Lower_respiratory_infections),
+            Neonatal_disorders = sum(Neonatal_disorders),
+            Alcohol_use_disorders = sum(Alcohol_use_disorders),
+            Self_harm = sum(Self_harm),
+            Exposure_to_forces_of_nature = sum(Exposure_to_forces_of_nature),
+            Diarrheal_diseases = sum(Diarrheal_diseases),
+            Environmental_heat_and_cold_exposure = sum(Environmental_heat_and_cold_exposure),
+            Neoplasms = sum(Neoplasms),
+            Conflict_and_terrorism = sum(Conflict_and_terrorism),
+            Diabetes_mellitus = sum(Diabetes_mellitus),
+            Chronic_kidney_disease = sum(Chronic_kidney_disease),
+            Protein_energy_malnutrition = sum(Protein_energy_malnutrition),
+            Terrorism = sum(Terrorism),
+            Road_injuries = sum(Road_injuries),
+            Chronic_respiratory_diseases = sum(Chronic_respiratory_diseases),
+            Cirrhosis_and_other_chronic_liver_diseases = sum(Cirrhosis_and_other_chronic_liver_diseases),
+            Digestive_diseases = sum(Digestive_diseases),
+            Fire_heat_and_hot_substances = sum(Fire_heat_and_hot_substances),
+            Acute_hepatitis = sum(Acute_hepatitis))
+```
+
+
+
+
+```{r}
+# Get the coordinates of countries
+#world_map_1 <- map_data("world")  # Load the world map data
+
+# Extract the unique country names
+#countries <- unique(world_map_1$region)
+
+# Loop through each country and retrieve its coordinates
+#coordinates <- lapply(countries, function(country) {
+ # country_map <- subset(world_map_1, region == country)
+  #mean_lon <- mean(country_map$long, na.rm = TRUE)
+  #mean_lat <- mean(country_map$lat, na.rm = TRUE)
+  #data.frame(country = country, lon = mean_lon, lat = mean_lat)
+#})
+
+# Combine the coordinates into a single data frame
+#coordinates_df <- do.call(rbind, coordinates)
+
+# Print the resulting data frame
+#print(coordinates_df)
+
+
+#coordinates_df <- coordinates_df%>%
+ # rename(Entity = country)
+```
+
+
+
+```{r}
+
+world_map <- world_map%>%
+  arrange(Entity)
+
+
+xx <- merge(world_map, good, by = "order", all.x = TRUE)
+
+```
+
+
+
+```{r}
+#install.packages("rvest")
+library(rvest)
+
+# URL di una pagina web contenente i dati demografici
+url <- "https://www.worldometers.info/world-population/population-by-country/"
+
+# Estrarre i dati dalla tabella HTML
+data <- url %>%
+  read_html() %>%
+  html_nodes("table#example2") %>%
+  html_table()
+
+
+
+# Selezionare solo le colonne necessarie (Paese e Popolazione)
+data <- data[[1]][, c("Country (or dependency)", "Population (2023)", "Yearly Change")]
+
+# Rinominare le colonne
+colnames(data) <- c("Entity", "Population", "Yearly_Change")
+
+# Visualizzare i dati demografici
+print(data)
+
+
+# Rimuovi il simbolo "%" dalla colonna "Yearly Change"
+data <- data %>%
+  mutate(Yearly_Change = as.numeric(gsub("%", "", Yearly_Change)))
+
+data$Population <- gsub(",", "", data$Population)
+data$Population <- as.numeric(data$Population)
+
+
+# Calcola la popolazione nel 2019 e nel 1990
+data <- data %>%
+  mutate(Population_2019 = `Population` / (1 + Yearly_Change/100) ^ (2020 - 2019),
+         Population_1990 = `Population` / (1 + Yearly_Change/100) ^ (2020 - 1990))
+
+#Devo inserire questi dati a mano poichè non è presente alcun dato nella pagina html che 
+#ho scrappato. La fonte da cui ho preso queste informazioni è 
+#https://www.populationpyramid.net/es/rep%C3%BAblica-democr%C3%A1tica-del-congo/1990/
+
+data <- data %>%
+  add_row(Entity = "UK", Population_1990 = 66778659, Yearly_Change = NA, Population_2019 = 66778659) %>%
+  add_row(Entity = "USA", Population_1990 = 334319671, Yearly_Change = NA, Population_2019 = 334319671) %>%
+  add_row(Entity = "Democratic Republic of the Congo", Population_1990 = 92853165, Yearly_Change = NA, Population_2019 = 92853165) %>%
+  add_row(Entity = "Czech Republic", Population_1990 = 10536871, Yearly_Change = NA, Population_2019 = 10536871)
+
+data <- data%>%
+  arrange(Entity)
+
+```
+
+
+```{r}
+my_dataframe <- subset(xx, select = -Entity.y)
+my_dataframe <- my_dataframe %>% rename(Entity = Entity.x)
+my_dataframe <- my_dataframe%>%
+  select(-subregion)
+
+nn <- my_dataframe[, 7:37]
+nn1 <- my_dataframe[, 1:6]
+```
+
+
+```{r}
+# Definisci una funzione per l'imputazione Hot-deck
+#IN QUESTO PUNTO HO SIMULATO I VALORI PER I QUATTRO STATI DI CUI NON HO INFORMAZIONI
+#IL PROBLEMA è CHE NON HO LE DATE PER CUI DEVO SIMULARE ANCHE QUELLE, QUESTO è UN FORTE 
+#LIMITE DEL MIO STUDIO.
+hotdeck_imputation <- function(data) {
+  for (i in 1:ncol(data)) {
+    missing_rows <- is.na(data[, i])
+    non_missing_rows <- !missing_rows
+    unique_values <- unique(data[non_missing_rows, i])
+    data[missing_rows, i] <- sample(unique_values, sum(missing_rows), replace = TRUE)
+  }
+  return(data)
+}
+
+# Esegui l'imputazione Hot-deck
+hot_deck_imputed <- hotdeck_imputation(nn)
+
+print(hot_deck_imputed)
+
+
+ss <- cbind(nn1, hot_deck_imputed)
+```
+
+
+```{r}
+#Antarctica - Democratic Republic of the Congo - Czech Republic - UK - USA
+stati_da_estrarre <- c("Antarctica", "Democratic Republic of the Congo", "Czech Republic", "UK", "USA")
+righe_stati <- ss[ss$Entity %in% stati_da_estrarre, ]
+
+
+# Generazione della sequenza di anni da 1990 al 2019
+anni <- 1990:2019
+
+# Sostituzione degli NA con gli anni in accordo con la variabile "group"
+dataset <- righe_stati %>%
+  group_by(group) %>%
+  mutate(Year = ifelse(is.na(Year), rep(anni, length.out = n()), Year)) %>%
+  ungroup()
+
+#table(righe_stati$group)
+
+#Ora devo unire i due dataframe, il primo chiamato "dataset" dove ho i quattro stati
+#e il seondo in cui ho tutti gli altri stati, chiamato "my_dataframe"
+
+my_dataframe <- rbind(dataset, ss)
+
+
+my_dataframe <- my_dataframe %>%
+  arrange(Entity)
+
+```
+
+
+```{r}
+#Ora sono interessato solamente a ciò che è accaduto nel 1990 e nel 2019
+xx_1 <- my_dataframe%>%
+  filter(Year == 1990 | Year == 2019)%>%
+  group_by(Entity, group, order, long, lat, Year, Meningitis,
+           Alzheimer_s_disease_and_other_dementias,
+           Parkinson_s_disease,
+           Nutritional_deficiencies,
+           Malaria,
+           Drowning,
+           Interpersonal_violence,
+           Maternal_disorders,
+           HIV_AIDS,
+           Drug_use_disorders,
+           Tuberculosis,
+           Cardiovascular_diseases,
+           Lower_respiratory_infections,
+           Neonatal_disorders,
+           Alcohol_use_disorders,
+           Self_harm,
+           Exposure_to_forces_of_nature,
+           Diarrheal_diseases,
+           Environmental_heat_and_cold_exposure,
+           Neoplasms,
+           Conflict_and_terrorism,
+           Diabetes_mellitus,
+           Chronic_kidney_disease,
+           Protein_energy_malnutrition,
+           Terrorism,
+           Road_injuries,
+           Chronic_respiratory_diseases,
+           Cirrhosis_and_other_chronic_liver_diseases,
+           Digestive_diseases,
+           Fire_heat_and_hot_substances,
+           Acute_hepatitis
+    
+  )%>%
+  reframe(
+   )
+
+```
+
+
+```{r}
+aa <- merge(xx_1, data, by = "Entity", all.x = TRUE)
+```
+
+
+```{r}
+#OK ORA DA QUI DEVI TOGLIERE GLI STATI CHE RITIENI INUTILI!!
+
+# Stati da eliminare
+stati_da_elim = c("Anguilla", "Antigua and Barbuda", "Aruba", "British Virgin Islands", "Cabo Verde",
+                  "Caribbean Netherlands", "Cayman Islands", "Channel Islands", "Congo", "Côte d'Ivoire",
+                  "Curaçao", "Czech Republic (Czechia)", "DR Congo", "Eswatini", "Faeroe Islands", "Falkland Islands",
+                  "French Guiana", "French Polynesia", "Gibraltar", "Guadeloupe", "Holy See", "Hong Kong", "Isle of Man",
+                  "Liechtenstein", "Macao", "Martinique", "Mayotte", "Micronesia", "Montserrat", "New Caledonia", "Réunion",
+                  "Saint Barthelemy", "Saint Helena", "Saint Kitts & Nevis", "Saint Martin", "Saint Pierre & Miquelon",
+                  "Sao Tome & Principe", "Sint Maarten", "St. Vincent & Grenadines", "State of Palestine", "Timor-Leste",
+                  "Tokelau", "Trinidad and Tobago", "Turks and Caicos", "Tuvalu", "U.S. Virgin Islands", "United Kingdom",
+                  "United States", "Wallis & Futuna", "Western Sahara")
+
+# Rimuovere le righe corrispondenti agli stati specificati
+aa <- subset(aa, !Entity %in% stati_da_elim)
+```
+
+
+Proporzione di casi per ogni malattia rispetto alla popolazione nel 2019, espressa come percentuale.
+
+Se il risultato è 1.55808401 per Meningitis_2019 in Afghanistan, significa che la percentuale di casi di meningite rispetto alla popolazione stimata nel 2019 è del 1.55808401%.
+
+In altre parole, il valore 1.55808401 rappresenta la percentuale della popolazione che ha avuto casi di meningite nel 2019 rispetto al numero totale di individui stimati in quell'anno. Ad esempio, la popolazione stimata in Afghanistan nel 2019 è di 41129361, allora ci sarebbero stati circa 1.558 casi di meningite.
+
+Questa proporzione è utile per capire la diffusione della meningite nella popolazione durante quell'anno specifico, consentendo di valutare l'impatto e l'incidenza della malattia in termini percentuali rispetto alla dimensione della popolazione.
+
+```{r}
+aa_2019 <- aa%>%
+  filter(Year == 2019)%>%
+  mutate(Meningitis_2019 = (Meningitis/Population_2019)*100,
+         Alzheimer_s_disease_and_other_dementias_2019 = (Alzheimer_s_disease_and_other_dementias/Population_2019)*100,
+         Parkinson_s_disease_2019 = (Parkinson_s_disease/Population_2019)*100,
+         Nutritional_deficiencies_2019 = (Nutritional_deficiencies/Population_2019)*100,
+         Malaria_2019 = (Malaria/Population_2019)*100,
+         Drowning_2019 = (Drowning/Population_2019)*100,
+         Interpersonal_violence_2019 = (Interpersonal_violence/Population_2019)*100,
+         Maternal_disorders_2019 = (Maternal_disorders/Population_2019)*100,
+         HIV_AIDS_2019 = (HIV_AIDS/Population_2019)*100,
+         Drug_use_disorders_2019 = (Drug_use_disorders/Population_2019)*100,
+         Tuberculosis_2019 = (Tuberculosis/Population_2019)*100,
+         Cardiovascular_diseases_2019 = (Cardiovascular_diseases/Population_2019)*100,
+         Lower_respiratory_infections_2019 = (Lower_respiratory_infections/Population_2019)*100,
+         Neonatal_disorders_2019 = (Neonatal_disorders/Population_2019)*100,
+         Alcohol_use_disorders_2019 = (Alcohol_use_disorders/Population_2019)*100,
+         Self_harm_2019 = (Self_harm/Population_2019)*100,
+         Exposure_to_forces_of_nature_2019= (Exposure_to_forces_of_nature/Population_2019)*100,
+         Diarrheal_diseases_2019 = (Diarrheal_diseases/Population_2019)*100,
+         Environmental_heat_and_cold_exposure_2019 = (Environmental_heat_and_cold_exposure/Population_2019)*100,
+         Neoplasms_2019 = (Neoplasms/Population_2019)*100,
+         Conflict_and_terrorism_2019 = (Conflict_and_terrorism/Population_2019)*100,
+         Diabetes_mellitus_2019 = (Diabetes_mellitus/Population_2019)*100,
+         Chronic_kidney_disease_2019  = (Chronic_kidney_disease/Population_2019)*100,
+         Protein_energy_malnutrition_2019 = (Protein_energy_malnutrition/Population_2019)*100,
+         Terrorism_2019 = (Terrorism/Population_2019)*100,
+         Road_injuries_2019  = (Road_injuries/Population_2019)*100,
+         Chronic_respiratory_diseases_2019 = (Chronic_respiratory_diseases/Population_2019)*100,
+         Cirrhosis_and_other_chronic_liver_diseases_2019 = (Cirrhosis_and_other_chronic_liver_diseases/Population_2019)*100,
+         Digestive_diseases_2019 = (Digestive_diseases/Population_2019)*100,
+         Fire_heat_and_hot_substances_2019 = (Fire_heat_and_hot_substances/Population_2019)*100,
+         Acute_hepatitis_2019 = (Acute_hepatitis/Population_2019)*100
+  )
+
+
+#Qua seleziono solamente le colonne che hanno delle percentuali nel dataset del 2019
+aa_2019_prop <- aa_2019 %>%
+  select(1:3, 6, 38:72)
+
+
+
+aa_1990 <- aa%>%
+  filter(Year == 1990)%>%
+  mutate(Meningitis_1990 = (Meningitis/Population_1990)*100,
+         Alzheimer_s_disease_and_other_dementias_1990 = (Alzheimer_s_disease_and_other_dementias/Population_1990)*100,
+         Parkinson_s_disease_1990 = (Parkinson_s_disease/Population_1990)*100,
+         Nutritional_deficiencies_1990 = (Nutritional_deficiencies/Population_1990)*100,
+         Malaria_1990 = (Malaria/Population_1990)*100,
+         Drowning_1990 = (Drowning/Population_1990)*100,
+         Interpersonal_violence_1990 = (Interpersonal_violence/Population_1990)*100,
+         Maternal_disorders_1990 = (Maternal_disorders/Population_1990)*100,
+         HIV_AIDS_1990 = (HIV_AIDS/Population_1990)*100,
+         Drug_use_disorders_1990 = (Drug_use_disorders/Population_1990)*100,
+         Tuberculosis_1990 = (Tuberculosis/Population_1990)*100,
+         Cardiovascular_diseases_1990 = (Cardiovascular_diseases/Population_1990)*100,
+         Lower_respiratory_infections_1990 = (Lower_respiratory_infections/Population_1990)*100,
+         Neonatal_disorders_1990 = (Neonatal_disorders/Population_1990)*100,
+         Alcohol_use_disorders_1990 = (Alcohol_use_disorders/Population_1990)*100,
+         Self_harm_1990 = (Self_harm/Population_1990)*100,
+         Exposure_to_forces_of_nature_1990 = (Exposure_to_forces_of_nature/Population_1990)*100,
+         Diarrheal_diseases_1990 = (Diarrheal_diseases/Population_1990)*100,
+         Environmental_heat_and_cold_exposure_1990 = (Environmental_heat_and_cold_exposure/Population_1990)*100,
+         Neoplasms_1990 = (Neoplasms/Population_1990)*100,
+         Conflict_and_terrorism_1990 = (Conflict_and_terrorism/Population_1990)*100,
+         Diabetes_mellitus_1990 = (Diabetes_mellitus/Population_1990)*100,
+         Chronic_kidney_disease_1990  = (Chronic_kidney_disease/Population_1990)*100,
+         Protein_energy_malnutrition_1990 = (Protein_energy_malnutrition/Population_1990)*100,
+         Terrorism_1990 = (Terrorism/Population_1990)*100,
+         Road_injuries_1990 = (Road_injuries/Population_1990)*100,
+         Chronic_respiratory_diseases_1990 = (Chronic_respiratory_diseases/Population_1990)*100,
+         Cirrhosis_and_other_chronic_liver_diseases_1990 = (Cirrhosis_and_other_chronic_liver_diseases/Population_1990)*100,
+         Digestive_diseases_1990 = (Digestive_diseases/Population_1990)*100,
+         Fire_heat_and_hot_substances_1990 = (Fire_heat_and_hot_substances/Population_1990)*100,
+         Acute_hepatitis_1990 = (Acute_hepatitis/Population_1990)*100
+  )
+
+
+#Qua seleziono solamente le colonne che hanno delle percentuali nel dataset del 1990
+aa_1990_prop <- aa_1990 %>%
+  select(1:3, 6, 38:72)
+
+```
+
+
+```{r}
+xx1990 <- xx_1%>%
+  filter(Year == 1990)
+#%>%
+ # select(long, lat)
+
+xx2019 <- xx_1%>%
+  filter(Year == 2019)
+#%>%
+ # select(long, lat)
+
+a_1990 <- cbind(xx1990, aa_1990_prop)
+
+a_1990 <- a_1990%>%
+  select(1:6, 45:76)
+
+a_2019 <- cbind(xx2019, aa_2019_prop)
+
+a_2019 <- a_2019%>%
+  select(1:6, 45:76)
+```
+
+
+
+
+
+
+
+## Visualization
+
+```{r}
+plot_1990 <- ggplot() +
+  geom_polygon(data = a_1990, aes(x = long, y = lat, group = group, fill = Meningitis_1990), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme(legend.position = "none")
+
+plot_2019<- ggplot() +
+  geom_polygon(data = a_2019, aes(x = long, y = lat, group = group, fill = Meningitis_2019), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  guides(fill = guide_legend(direction = "horizontal"))
+  #theme(legend.position = "none")
+
+
+#install.packages("gridExtra")
+library(gridExtra)
+library(cowplot)
+library(grid)
+combined_plot <- grid.arrange(plot_1990, plot_2019, nrow = 2)
+
+#combined_plot <- plot_grid(plot_1990, plot_2019, nrow = 2, align = "v", rel_heights = c(1, 1))
+
+# Aggiungi una sola legenda
+legend <- cowplot::get_legend(plot_2019)
+#legend <- theme(legend.direction = "horizontal", legend.position = "top")
+legend
+
+plot_1990 <- ggplot() +
+  geom_polygon(data = a_1990, aes(x = long, y = lat, group = group, fill = Meningitis_1990), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_void() +
+  theme(legend.position = "none") #, panel.background = element_rect(fill = "white"))
+
+plot_2019<- ggplot() +
+  geom_polygon(data = a_2019, aes(x = long, y = lat, group = group, fill = Meningitis_2019), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_void() +
+  theme(legend.position = "none")
+
+combined_plot <- grid.arrange(plot_1990, plot_2019, nrow = 2)
+  
+
+# Aggiungi un titolo unico
+main_title <- textGrob("Comparison of Country Coordinates", gp = gpar(fontsize = 16, fontface = "bold"))
+#combined_plot <- arrangeGrob(main_title, combined_plot, heights = unit(c(0.2, 0.8), "null"))
+combined_plot_with_legend <- arrangeGrob(main_title, combined_plot, legend, heights = unit(c(0.2, 1.5, 0.2),"null"))
+#combined_plot_with_legend <- combined_plot_with_legend + theme(legend.direction = "horizontal")
+
+
+# Visualizza il grafico con il titolo unico
+grid.newpage()
+#grid.draw(combined_plot)
+grid.draw(combined_plot_with_legend)
+
+```
+
+
+```{r}
+plot_1990 <- ggplot() +
+  geom_polygon(data = a_1990, aes(x = long, y = lat, group = group, fill = HIV_AIDS_1990), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme(legend.position = "none")
+
+plot_2019<- ggplot() +
+  geom_polygon(data = a_2019, aes(x = long, y = lat, group = group, fill = HIV_AIDS_2019), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  guides(fill = guide_legend(direction = "horizontal"))
+#theme(legend.position = "none")
+
+#install.packages("gridExtra")
+#library(gridExtra)
+#library(cowplot)
+#library(grid)
+combined_plot <- grid.arrange(plot_1990, plot_2019, nrow = 2)
+
+#combined_plot <- plot_grid(plot_1990, plot_2019, nrow = 2, align = "v", rel_heights = c(1, 1))
+
+# Aggiungi una sola legenda
+legend <- cowplot::get_legend(plot_2019)
+#legend <- theme(legend.direction = "horizontal", legend.position = "top")
+legend
+
+plot_1990 <- ggplot() +
+  geom_polygon(data = a_1990, aes(x = long, y = lat, group = group, fill = HIV_AIDS_1990), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_void() +
+  theme(legend.position = "none") #, panel.background = element_rect(fill = "white"))
+
+plot_2019<- ggplot() +
+  geom_polygon(data = a_2019, aes(x = long, y = lat, group = group, fill = HIV_AIDS_2019), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_gradient(low = "blue", high = "red") +
+  theme_void() +
+  theme(legend.position = "none")
+
+combined_plot <- grid.arrange(plot_1990, plot_2019, nrow = 2)
+
+
+# Aggiungi un titolo unico
+main_title <- textGrob("Comparison of Country Coordinates", gp = gpar(fontsize = 16, fontface = "bold"))
+#combined_plot <- arrangeGrob(main_title, combined_plot, heights = unit(c(0.2, 0.8), "null"))
+combined_plot_with_legend <- arrangeGrob(main_title, combined_plot, legend, heights = unit(c(0.2, 1.5, 0.2),"null"))
+#combined_plot_with_legend <- combined_plot_with_legend + theme(legend.direction = "horizontal")
+
+
+# Visualizza il grafico con il titolo unico
+grid.newpage()
+#grid.draw(combined_plot)
+grid.draw(combined_plot_with_legend)
+```
+
+
+
+
+Qua seleziono solamente le colonne di interesse per lo svolgimento della Principal Component Analysis.
+
+```{r}
+data_eu_af_1 <-  a_2019%>%
+  select(c("Meningitis_2019", "Alzheimer_s_disease_and_other_dementias_2019", "Parkinson_s_disease_2019", "Malaria_2019", "Nutritional_deficiencies_2019",
+            "Drowning_2019", "Interpersonal_violence_2019", "Maternal_disorders_2019", "HIV_AIDS_2019", "Drug_use_disorders_2019", "Tuberculosis_2019",
+            "Cardiovascular_diseases_2019", "Lower_respiratory_infections_2019", "Neonatal_disorders_2019", "Alcohol_use_disorders_2019",
+            "Self_harm_2019", "Exposure_to_forces_of_nature_2019", "Diarrheal_diseases_2019", "Environmental_heat_and_cold_exposure_2019",
+            "Neoplasms_2019", "Conflict_and_terrorism_2019", "Diabetes_mellitus_2019", "Chronic_kidney_disease_2019", 
+            "Protein_energy_malnutrition_2019", "Road_injuries_2019", "Chronic_respiratory_diseases_2019", "Cirrhosis_and_other_chronic_liver_diseases_2019", 
+            "Digestive_diseases_2019", "Fire_heat_and_hot_substances_2019", "Acute_hepatitis_2019"))
+
+#colnames(aa_1990_prop)
+
+data_eu_af_2 <-  a_1990%>%
+  select(c("Meningitis_1990", "Alzheimer_s_disease_and_other_dementias_1990", "Parkinson_s_disease_1990", "Malaria_1990", "Nutritional_deficiencies_1990",
+           "Drowning_1990", "Interpersonal_violence_1990", "Maternal_disorders_1990", "HIV_AIDS_1990", "Drug_use_disorders_1990", "Tuberculosis_1990",
+           "Cardiovascular_diseases_1990", "Lower_respiratory_infections_1990", "Neonatal_disorders_1990", "Alcohol_use_disorders_1990",
+           "Self_harm_1990", "Exposure_to_forces_of_nature_1990", "Diarrheal_diseases_1990", "Environmental_heat_and_cold_exposure_1990",
+           "Neoplasms_1990", "Conflict_and_terrorism_1990", "Diabetes_mellitus_1990", "Chronic_kidney_disease_1990", 
+           "Protein_energy_malnutrition_1990", "Road_injuries_1990", "Chronic_respiratory_diseases_1990", "Cirrhosis_and_other_chronic_liver_diseases_1990", 
+           "Digestive_diseases_1990", "Fire_heat_and_hot_substances_1990", "Acute_hepatitis_1990"))
+
+```
+
+
+
+
+
+
+## PRINCIPAL COMPONENT ANALYSIS
+
+Infinite values 2019
+```{r}
+# Identifica colonne con valori infiniti
+# Identifica colonne con valori infiniti
+has_infinite <- sapply(data_eu_af_1, function(x) any(is.infinite(x)))
+
+# Sostituisci i valori infiniti con zero
+data_eu_af_1[, has_infinite] <- lapply(data_eu_af_1[, has_infinite], function(x) ifelse(is.infinite(x), 0, x))
+
+# Converti le colonne in numerico
+data_eu_af_1 <- data.frame(lapply(data_eu_af_1, as.numeric))
+
+data_eu_af_1[is.na(data_eu_af_1)] <- 0
+```
+
+
+```{r}
+# Esegui l'analisi delle componenti principali
+pca <- prcomp(data_eu_af_1, scale = TRUE)
+summary(pca)
+```
+Nel contesto dell'analisi delle Componenti Principali (PCA), una componente si riferisce a una combinazione lineare delle variabili presente in un insieme di dati. Rappresenta una nuova variabile che cattura i modelli e le strutture presenti nei dati originali.
+
+Nella PCA, le componenti vengono costruite in modo tale che la prima componente (PC1) catturi la maggior parte della variazione presente nei dati. Ciascuna componente successiva, in ordine di importanza, cattura la variazione residua mantenendo l'ortogonalità rispetto alle componenti precedenti.
+
+In sostanza, una componente in PCA è una nuova variabile che sintetizza le informazioni importanti dei dati originali.
+Essa può essere interpretata come un fattore che rappresenta una caratteristica rilevante comune alle variabili originali o una combinazione lineare di variabili che evidenzia pattern o strutture sottostanti nei dati.
+
+L'obiettivo principale della PCA è quello di ridurre la dimensionalità dei dati, catturando la maggior parte della variazione con un numero inferiore di componenti. Questo semplifica l'analisi dei dati e può aiutare ad individuare relazioni significative tra le variabili o raggruppare osservazioni simili.
+
+Il risultato dell'analisi PCA (Principal Component Analysis) riporta diversi valori che forniscono informazioni sulle componenti principali e sulla varianza spiegata dei dati.
+
+Nel tuo caso, il risultato della PCA include i seguenti valori per ciascuna componente principale:
+  
+ - Standard deviation: Indica la deviazione standard delle componenti principali. Questo valore misura la dispersione dei dati lungo ciascuna      componente principale. Maggiore è il valore, maggiore è la variazione dei dati in quella componente.
+   Maggiore è il valore della deviazione standard per una componente principale, maggiore è la variazione dei dati lungo quella specifica direzione. Questo significa che la componente principale con una deviazione standard maggiore contiene più variazione e informazioni significative rispetto alle altre.
+   La variazione standard può essere utile per valutare l'importanza delle componenti principali nel contribuire alla varianza totale dei dati. Componenti con deviazioni standard elevate avranno un impatto più significativo sulla descrizione e sulla rappresentazione dei dati originali, poichè catturano una maggiore variazione rispetto alle componenti con deviazioni standard più basse. Comunque devono essere prese in considerazione anche la proporzione di varianza spiegata e la proporzione cumulativa di varianza spiegata, poichè queste informazioni indicano quanto le componenti principali contribuiscano complessivamente a catturare la variazione nei dati.
+
+ - Proportion of Variance: Rappresenta la proporzione di varianza spiegata da ciascuna componente principale. Questo valore indica quanto          contribuisce ogni componente principale alla variazione totale dei dati. Ad esempio, PC1 spiega il 49.57% della varianza totale, PC2            spiega il 20.02% e così via.
+
+ - Cumulative Proportion: Indica la proporzione cumulativa di varianza spiegata. 
+   Questo valore rappresenta la somma delle proporzioni di varianza fino alla componente principale corrispondente. Ad esempio, le prime due       componenti principali (PC1 e PC2) spiegano il 69.59% della varianza totale, le prime tre spiegano l'85.12% e così via.
+
+ - Interpretando i risultati, puoi notare che le prime componenti principali (PC1, PC2, PC3) spiegano una percentuale significativa della          varianza totale. Ad esempio, le prime tre componenti spiegano l'85.12% della varianza totale. Ciò indica che queste componenti principali       contengono informazioni rilevanti e significative nei dati originali.
+
+Puoi utilizzare queste informazioni per selezionare un numero appropriato di componenti principali da utilizzare nell'analisi successiva. Ad esempio, potresti decidere di mantenere solo le prime due o tre componenti principali che spiegano la maggior parte della varianza totale.
+
+
+
+```{r}
+pca$rotation[, 1:3]
+```
+
+La matrice di rotazione in un'analisi PCA contiene i coefficienti di carico oppure i pesi che rappresentano le correlazioni tra le variabili originali e le componenti principali estratte. Questi coefficienti indicano quanto ciascuna variabile contribuisce alle prime tre componenti principali.
+
+Questa tabella rappresenta la matrice di rotazione delle prime tre componenti principali (PC1, PC2, PC3) ottenute dall'analisi delle componenti principali (PCA) su un insieme di dati.
+
+Nella matrice di rotazione, ogni riga corrisponde a una variabile originale e ogni colonna rappresenta una componente principale. I valori nella tabella indicano i coefficienti di carico o i pesi delle variabili originali sulle rispettive componenti principali. Questi coefficienti mostrano quanto ciascuna variabile contribuisce o è correlata alle prime tre componenti principali.
+
+Ad esempio.
+ - per la variabile "Meningitis_2019", i coefficienti di 
+   carico per le prime tre componenti sono 
+   PC1 = 0.2275, PC2 = -0.0050 e PC3 = -0.2161.
+
+Questi coefficienti mostrano la relazione di ciascuna varaibile con le prime tre componenti principali. Valori più alti in valore assoluto indicano una maggiore correlazione tra la variabile e la componente principale, mentre valori vicini a zero indicano una correlazione più debole oppure nulla.
+
+L'analisi PCA è un metodo statistico utilizzato per ridurre la dimensionalità dei dati, identificando le combinazioni lineari di variabili che spiegano la maggior parte della varianza nei dati originali. Le prime tre componenti principali in questa tabella rappresentano le combinazioni di variabili più significative per spiegare la varaizione nei dati originali.
+
+
+
+
+
+
+
+
+
+```{r}
+library(factoextra)
+fviz_screeplot(pca, addlabels = TRUE)
+```
+Lo scree plot è un grafico che mostra la varianza spiegata da ciascuna delle componenti principali (PCA). Viene utilizzato per determinare quante componenti principali includere nell'analisi, poichè le prime componenti principali spiegano la maggior parte della varianza nei dati, mentre le componenti successive spiegano sempre meno varianza. Sull'asse delle x vengono mostrati i numeri delle componenti principali, mentre sull'asse delle y viene mostrata la varianza spiegata da ciascuna componente. Le barre nel grafico rappresentano la varianza spiegata da ciascuna componente.
+
+
+
+Analyze first component
+```{r}
+barplot(pca$rotation[,1],las = 2, col = "darkblue")
+```
+
+Restituisce un grafico a barre per i coefficienti di carico della prima componente principale (PC1) ottenuti dall'analisi delle componenti principali (PCA).
+
+I coefficienti di carico rappresentano la correlazione tra le variabili originali e le componenti principali. In questo caso, il codice prende i coefficienti di carico relativi alla prima componente principale (PC1) dall'oggetto "pca".
+
+Nel grafico a barre, ciascuna variabile originale sarà rappresentata da una barra. L'altezza di ciascuna barra indica l'entità e la direzione della correlazione tra la variabile originale e la PC1. Se l'altezza della barra è positiva, significa che la variabile è positivamente correlata alla PC1, mentre se è negativa, indica una correlzione negativa. Maggiore è l'altezza della barra (in valore assoluto), maggiore è l'influenza della variabile sulla PC1.
+
+```{r}
+fviz_contrib(pca, choice = "var", axes = 1)
+```
+
+Questa funzione viene utilizzata per visualizzare il contributo delle variabili alle componenti principali in un'analisi delle componenti principali
+
+Il comando restituisce un grafico che mosrtra il contributo delle variabili alla prima componente principale (PC1) nella PCA. Questo grafico ti
+permette di valutare l'importanza relativa delle variabili nel contribuire alla variazione osservata nella prima componente principali.
+
+Questo tipo di visualizzazione può essere utile per comprendere quali variabili sono più rilevanti nel determinare i modelli e i pattern osservati durante un'analisi PCA.
+
+L'asse delle percentuali di contribuzione fornisce un'indicazione dell'importanza relativa di ciascuna componente principale nella spiegazione della variazione nei dati. Le componenti principali con una percentuale di contribuzione più alta sono considerate più rilevanti e possono rappresentare i principali fattori che influenzano i pattern osservati nei dati.
+
+Nel contesto della PCA, è importante considerare le componenti principali con una percentuale di contribuzione più alta, poichè queste spiegano una maggiore quantità di variazione nei dati e possono essere utilizzate per ridurre la dimensionalità dei dati o identificare le principali direzioni di variabilità.
+
+"La varaibile [nome della variabile] contribuisce in modo significativo al 6% della varianza totale spiegata dalla prima componente principale nell'analisi delle componenti principali".
+
+Questo indica che la variabile ha un modesto impatto sulla formazione della componente principale e può essere rilevante per una parte limitata della struttura dei dati rappresentata da quella componente principale. Tuttavia, è importante considerare anche altre variabili con contribuzioni più elevate.
+
+
+
+Analyze second component
+```{r}
+barplot(pca$rotation[,2], las=2, col="darkblue")
+```
+
+
+```{r}
+fviz_contrib(pca, choice = "var", axes = 2)
+```
+
+Analyze third component
+```{r}
+barplot(pca$rotation[,3], las=2, col="darkblue")
+
+fviz_contrib(pca, choice = "var", axes = 3)
+```
+
+
+
+
+
+
+
+Infinite values 1990
+```{r}
+has_infinite <- sapply(data_eu_af_2, function(x) any(is.infinite(x)))
+
+# Sostituisci i valori infiniti con zero
+data_eu_af_2[, has_infinite] <- lapply(data_eu_af_2[, has_infinite], function(x) ifelse(is.infinite(x), 0, x))
+
+# Converti le colonne in numerico
+data_eu_af_2 <- data.frame(lapply(data_eu_af_2, as.numeric))
+
+data_eu_af_2[is.na(data_eu_af_2)] <- 0
+```
+
+
+```{r}
+pca_1 <- prcomp(data_eu_af_2, scale = T)
+summary(pca_1)
+```
+
+
+```{r}
+pca_1$rotation[, 1:3]
+```
+
+
+```{r}
+library(factoextra)
+fviz_screeplot(pca_1, addlabels = TRUE)
+```
+
+
+Analyze first component
+```{r}
+barplot(pca_1$rotation[,1],las = 2, col = "darkblue")
+```
+
+
+```{r}
+fviz_contrib(pca_1, choice = "var", axes = 1)
+```
+
+
+Analyze second component 
+```{r}
+barplot(pca_1$rotation[,2], las=2, col="darkblue")
+
+fviz_contrib(pca_1, choice = "var", axes = 2)
+```
+
+
+Analyze third component
+```{r}
+barplot(pca_1$rotation[,3], las=2, col="darkblue")
+
+fviz_contrib(pca_1, choice = "var", axes = 3)
+```
+
+
+
+```{r}
+# Carica il pacchetto per la visualizzazione delle componenti principali
+library(factoextra)
+
+# Visualizza il grafico delle componenti principali per il dataset del 2019
+par(mfrow = c(1, 2))
+fviz_pca_ind(pca, geom.ind = "point", pointshape = 21, pointsize = 1,
+             col.ind = "blue", col.var = "black")
+
+# Visualizza il grafico delle componenti principali per il dataset del 1990
+fviz_pca_ind(pca_1, geom.ind = "point", pointshape = 21, pointsize = 1,
+             col.ind = "red", col.var = "black")
+
+```
+
+Confrontando i due grafici delle componenti principali, puoi osservare le differenze nella distribuzione degli stati nei due periodi.
+I punti che sono vicini nella stessa direzione delle componenti principali indicano gli stati che hanno avuto una somiglianza nella distribuzione delle proporzioni di morte per diverse cause nel 2019 e nel 1990. Al contrario, gli stati che si trovano in direzioni opposte delle componenti principali mostrano cambiamenti significativi nella distribuzione delle proporzioni di morte tra i due paesi.
+
+è necessario osservare alcuni aspetti chiave:
+  -   Posizione dei punti: Ogni punto nel grafico rappresenta uno stato del mondo. La posizione di un punto nel grafico è determinata dalle sue coordinate sulle due componenti principali (asse x e asse y). I punti che si trovano in posizioni simili o vicine indicano stati con proporzioni di morte simili per le diverse cause nel 2019 e 1990.
+  -   Direzione delle componenti principali: le componenti principali rappresentano le direzioni lungo le quali i dati variano maggiormente. Gli stati che si trovano nella stessa direzione delle componenti principlai hanno avuto cambiamenti simili nella distribuzione delle proporzioni di morte tra i due periodi.
+  -   Distanza tra i punti: La distanza tra i punti nel grafico riflette la differenza nelle proporzioni di morte per le diverse cause tra i due periodi. I punti che si trovano lontani gli uni dagli altri hanno avuto cambiamenti significativi nella distribuzione delle proporzioni di morte tra il 2019 e il 1990.
+
+
+
+
+
+
+
+
+
+
+
+# CLUSTERING
+
+
+```{r}
+new_data <- a_2019%>%
+  group_by(Entity)%>%
+  slice(1)
+
+
+#new_data <- new_data[,-(1:7)]
+colSums(is.na(new_data))
+new_data[!complete.cases(new_data), ]
+new_data <- na.omit(new_data)
+
+
+country <- new_data%>%
+  select(Entity)
+
+new_data <- new_data[,-(1:7)]
+
+```
+
+
+```{r}
+fviz_nbclust(scale(new_data), kmeans, method = 'wss', k.max = 20, nstart = 1000)
+```
+
+
+```{r}
+fit.km = eclust(new_data, "kmeans", stand = T, k = 5, graph = T)
+```
+
+Per interpretare il grafico, analizziamo i valori degli assi che vengono creati:
+
+  -   Asse X: L'asse X rappresenta la prima dimensione ottenuta dall'analisi del clustering. Questa dimensione è stata calcolata dall'algoritmo K - means per massimizzare la valenza spiegata tra i cluster. Maggiore è la distanza tra i centroidi dei cluster lungo questa dimensione, maggiore è la separazione tra i cluster per questa caratteristica.
+  -   Asse Y: L'asse Y rappresenta la seconda dimensione ottenuta dall'analisi di clustering. Anche questa dimensione è stata calcolata per massimizzare la varianza spiegata tra i cluster, ma è indipendente dalla prima dimensione. La combinazione di entrambe le dimensioni permette di visualizzare la varianza complessiva tra i cluster.
+  -   Centroidi: All'interno del grafico, sono visualizzati anche i centroidi dei cluster, che sono rappresentati come simboli specifici. I centroidi rappresentano il centro di ogni cluster e possono aiutare ad identificare la posizione e la forma dei cluster nel grafico.
+  -   Separazione tra cluster
+  -   Varianza spiegata: la varianza spiegata dalle due dimensioni rappresentate sull'asse X e Y indica quanto di tutta la varianza dei dati sia spiegata dalle componenti principali scelte. Un'alta varianza spiegata indica che le dimensioni scelte sono rilevanti per descrivere le differenze tra i cluster.
+  
+Vengono formati cluster in base a caratteristiche simili in termini di impatto delle diverse cause di morte sulla popolazione.
+
+```{r}
+fit.km$cluster
+
+dd <- cbind(country, cluster = fit.km$cluster)
+dd <- cbind(dd, new_data)
+
+rr <- dd%>%
+  select(Entity, cluster)
+#%>%
+  #split(Entity, cluster)
+dd <- split(dd$Entity, dd$cluster)
+
+
+
+```
+
+
+```{r}
+d = dist(scale(new_data), method = "euclidean")
+hc <-  hclust(d, method = "ward.D2")
+```
+
+
+```{r}
+fviz_dend(x = hc, 
+          k=5,
+          palette = "jco", 
+          rect = TRUE, rect_fill = TRUE, cex=0.5,
+          rect_border = "jco"          
+)
+```
+
+
+```{r}
+fviz_dend(x = hc,
+          k = 5,
+          color_labels_by_k = TRUE,
+          cex = 0.8,
+          type = "phylogenic",
+          repel = TRUE) +
+  labs(title = "Socio-economic-health tree clustering of the world") +
+  theme(axis.text.x = element_blank())
+```
+
+
+
+
+
+```{r}
+new_data_1 <- a_1990%>%
+  group_by(Entity)%>%
+  slice(1)
+
+colSums(is.na(new_data_1))
+new_data_1[!complete.cases(new_data_1), ]
+new_data_1 <- na.omit(new_data_1)
+new_data_1 <- new_data_1[,-(1:7)]
+```
+
+```{r}
+fviz_nbclust(scale(new_data_1), kmeans, method = 'wss', k.max = 20, nstart = 1000)
+```
+
+
+```{r}
+fit.km_1 = eclust(new_data_1, "kmeans", stand = T, k = 5, graph = T)
+```
+
+Creo un dataset in modo da avere una colonna per gli stati e due colonne che mi indicano in quale gruppo si trova uno stato, prima nel 1990 e poi nel 2019.
+
+
+```{r}
+fit.km_1$cluster
+
+dd_1 <- cbind(country, cluster = fit.km_1$cluster)
+dd_11 <- cbind(dd_1, new_data_1)
+
+
+
+#%>%
+  #split(Entity, cluster)
+dd_1 <- split(dd_11$Entity, dd_1$cluster)
+
+
+#dd %>%
+ # group_by(cluster) %>%
+  #summarize(stati = Entity)
+
+
+rr_1 <- dd_11%>%
+  select(Entity, cluster)
+
+rr_11 <- rr_1[, 2]
+
+xx_tab <- cbind( rr,  rr_11)
+
+xx_tab <- xx_tab %>%
+  rename(cluster_2019 = cluster...2,
+         cluster_1990 = cluster...3)
+
+```
+
+Verifico quali stati hanno cambiato gruppo nel corso dei seguenti anni.
+```{r}
+subset(xx_tab, cluster_2019 != cluster_1990)
+```
+
+
+
+
+
+
+CALCOLO UN INDICE DI SALUTE PER CONFRONTARE SE CI SONO DIFFERENZE TRA I DUE DATASET (1990 - 2019)
+
+```{r}
+new_data <- a_2019%>%
+  group_by(Entity)%>%
+  slice(1)
+#new_data <- new_data[,-(1:7)]
+colSums(is.na(new_data))
+new_data[!complete.cases(new_data), ]
+new_data <- na.omit(new_data)
+
+new_data <- new_data[,-(1:7)]
+
+```
+
+
+```{r}
+new_data_1 <- a_1990%>%
+  group_by(Entity)%>%
+  slice(1)
+
+colSums(is.na(new_data_1))
+new_data_1[!complete.cases(new_data_1), ]
+new_data_1 <- na.omit(new_data_1)
+new_data_1 <- new_data_1[,-(1:7)]
+```
+
+Differenza delle medie: calcolo la differenza tra la media ponderata del 2019 e quella del 1990 per ciascuno degli stati per avere un'idea della direzione e dell'entità del cambiamento:
+
+```{r}
+
+pesi_1990 <- as.vector(pca_1$rotation[, 1])
+pesi_2019 <- as.vector(pca$rotation[, 1])
+
+# Moltiplica ogni elemento di pesi_1990 e pesi_2019 a ogni colonna di new_data_1 e new_data
+data_index_1990 <- rowSums(sweep(new_data_1, 2, pesi_1990, "*"))
+data_index_2019 <- rowSums(sweep(new_data,2, pesi_2019, "*"))
+
+# Calcolo della differenza tra le due medie ponderate
+df_diff <- data_index_2019 - data_index_1990
+
+```
+
+Percentuale di cambiamento: calcola la percentuale di cambiamento tra la media ponderata del 2019 e quella del 1990 per ciascuno degli stati. Questo ti permetterà di esprimere il cambiamento come una percentuale
+
+```{r}
+# Calcolo della percentuale di cambiamento tra le due medie ponderate
+percentuale_cambiamento <- (data_index_2019 - data_index_1990) / data_index_1990 * 100
+
+data_index <- cbind(country, percentuale_cambiamento)
+data_index <- data_index%>%
+  rename(perc_change = ...2)
+
+fin_data <- inner_join(a_1990, data_index, by = "Entity")
+
+fin_data <- fin_data %>%
+  select(1:5, last_col())
+```
+
+Test statistico: puoi utilizzare un test statistico per determinare se la differenza tra le due medie ponderate è statisticamente significativa. Ad esempio, puoi utilizzare il test t per campioni accoppiati per confrontare le due distribuzioni degli indici di salute.
+
+```{r}
+# Test t per campioni accoppiati
+t_test_result <- t.test(df_2019$Indice_salute, df_1990$Indice_salute, paired = TRUE)
+
+```
+
+
+QUA VORREI PLOTTARE LA MAPPA CON L'AUMENTO O LA RIDUZIONE DELLA PERCENTUALE DELL'INDICE DI SALUTE OTTENUTO CON LA SOMMA PONDERATA DELLE VARIABILI
+
+```{r}
+plot_1990 <- ggplot() +
+  geom_polygon(data = fin_data, aes(x = long, y = lat, group = group, fill = perc_change), color = "black") +
+  labs(title = "") +
+  coord_equal() +
+  scale_fill_continuous(low = "green", high = "red", limits = c(-100, 100)) +
+  theme_minimal()
+
+```
+
+  -   Se un valore è negativo, ad esempio -35.7878966, indica che l'indice di salute nel 2019 è diminuito rispetto al 1990. Quindi, c'è stato un cambiamento negativo, ovvero la salute è migliorata dal 1990 al 2019 per quel paese specifico.
+
+  -   Se un valore è positivo, ad esempio 68.2479125, indica che l'indice di salute nel 2019 è aumentato rispetto al 1990. Quindi, c'è stato un cambiamento positivo, ovvero la salute è peggiorata dal 1990 al 2019 per quel paese specifico.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
